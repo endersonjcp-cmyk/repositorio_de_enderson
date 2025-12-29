@@ -35,6 +35,10 @@
                                    class="btn btn-sm btn-primary">
                                     Editar
                                 </a>
+                                <a href="{% url 'delete_motorcycle' moto.id %}" 
+                                   class="btn btn-sm btn-danger">
+                                    Eliminar
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
