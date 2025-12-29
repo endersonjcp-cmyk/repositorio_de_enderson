@@ -106,8 +106,8 @@ def edit_motorcycle(request, moto_id):
             'error': 'Error al editar la moto. Por favor, intente de nuevo.'})
         
 @login_required
-def delete_motorcycle(request, motorcycle_id):
-    moto = get_object_or_404(Moto, pk=motorcycle_id, usuario=request.user)
+def delete_motorcycle(request, moto_id):
+    moto = get_object_or_404(Moto, pk=moto_id, usuario=request.user)
     moto.delete()
     if request.method == 'POST':
         moto.delete()

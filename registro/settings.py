@@ -15,10 +15,30 @@ import os
 import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+from pathlib import Path
 
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+if os.getenv("DJANGO_ENV") == "production":
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=os.getenv("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -85,13 +105,13 @@ WSGI_APPLICATION = 'registro.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
+#DATABASES = {
+    #'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        default='postgresql://postgres:postgres@localhost:5432/mysite',
-        conn_max_age=600
-    )
-}
+      #  default='postgresql://postgres:postgres@localhost:5432/mysite',
+       # conn_max_age=600
+    #)
+#}
 
 
 # Password validation
@@ -141,11 +161,11 @@ if not DEBUG:
 
 LOGIN_URL = 'singin/'
 
-
+import sentry_sdk
 
 sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),  # tu DSN de Sentry
-    integrations=[DjangoIntegration()],
-    traces_sample_rate=1.0,       # captura 100% de transacciones (puedes bajar en producción)
-    send_default_pii=True         # captura info de usuario autenticado
+    dsn="https://484a807d3cafa24bf45d328db603be55@o4510618376601600.ingest.us.sentry.io/4510618381123584",
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
 )
