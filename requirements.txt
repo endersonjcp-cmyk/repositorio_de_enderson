@@ -12,3 +12,5 @@ sqlparse==0.5.5
 tzdata==2025.3
 uvicorn==0.40.0
 whitenoise==6.11.0
+sentry-sdk>=2.0.0
+

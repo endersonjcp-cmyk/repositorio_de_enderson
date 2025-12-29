@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -138,3 +140,12 @@ if not DEBUG:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 LOGIN_URL = 'singin/'
+
+
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),  # tu DSN de Sentry
+    integrations=[DjangoIntegration()],
+    traces_sample_rate=1.0,       # captura 100% de transacciones (puedes bajar en producción)
+    send_default_pii=True         # captura info de usuario autenticado
+)
