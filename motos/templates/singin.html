@@ -1,0 +1,30 @@
+{% extends 'Base.html' %}
+
+
+{% block content %}
+<h1>
+    Bienvenido a la página de Motos
+</h1>
+<p>
+    ingresa a tu cuenta para gestionar tus motocicletas.
+</p>
+
+
+<form method="POST" class="card card-body ">
+    <h1 class="text-center mb-4 tm-5">
+    Sing in 
+    </h1>
+    {% csrf_token %} <!-- token especial para evitar que clonen la pagina. mecanismo de seguridad-->
+    <!-- el metodo post es un metodo que lo envia los campos de forma          oculta-->
+    <!-- de esta forma el navegador no va a mostar lo que el usuario escribe-->
+     {{form.as_p}} <!--muestra el formulario como parrafos-->
+    {{error}}
+    <button class="btn btn-primary">
+        Sing In
+    </button>
+
+</form>
+
+
+
+{% endblock %}

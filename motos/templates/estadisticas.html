@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estadísticas y Reportes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.3s;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 30px;
+    }
+    .progress-bar-custom {
+        height: 25px;
+        border-radius: 12px;
+    }
+    /* Colores predefinidos para evitar problemas CSS */
+    .color-rojo { background-color: #ff4444 !important; }
+    .color-azul { background-color: #4444ff !important; }
+    .color-verde { background-color: #44ff44 !important; }
+    .color-negro { background-color: #000000 !important; }
+    .color-blanco { background-color: #ffffff !important; border: 1px solid #ddd !important; }
+    .color-gris { background-color: #888888 !important; }
+    .color-amarillo { background-color: #ffff44 !important; }
+    .color-naranja { background-color: #ff8844 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1><i class="fas fa-chart-line text-primary"></i> Reportes y Estadísticas</h1>
+                <div>
+                    <a href="{% url 'motos' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a Motos
+                    </a>
+                    <button onclick="window.print()" class="btn btn-success">
+                        <i class="fas fa-print"></i> Imprimir Reporte
+                    </button>
+                </div>
+            </div>
+            <p class="text-muted">Análisis detallado de tu flota de motocicletas</p>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Resumen -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-motorcycle fa-3x mb-3"></i>
+                    <h3 class="display-4">{{ total_motos|default:0 }}</h3>
+                    <h5>Total de Motos</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-alt fa-3x mb-3"></i>
+                    <h3 class="display-4">{{ año_promedio|default:"N/A"|floatformat:0 }}</h3>
+                    <h5>Año Promedio</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x mb-3"></i>
+                    <h3 class="display-4">{{ antiguedad_promedio|default:"N/A"|floatformat:1 }}</h3>
+                    <h5>Antigüedad Promedio (años)</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-sliders-h fa-3x mb-3"></i>
+                    <h3 class="display-4">{{ año_mas_nuevo|default:"N/A" }}/{{ año_mas_viejo|default:"N/A" }}</h3>
+                    <h5>Año Más Nuevo/Viejo</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-chart-pie"></i> Distribución por Marca</h4>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="graficoMarca"></canvas>
+                    </div>
+                    {% if not datos_grafico_marca %}
+                    <div class="alert alert-info mt-3">
+                        No hay datos disponibles para el gráfico de marcas.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4><i class="fas fa-chart-bar"></i> Distribución por Año</h4>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="graficoYear"></canvas>
+                    </div>
+                    {% if not datos_grafico_year %}
+                    <div class="alert alert-info mt-3">
+                        No hay datos disponibles para el gráfico de años.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablas Detalladas -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-tags"></i> Motos por Marca</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Marca</th>
+                                    <th>Cantidad</th>
+                                    <th>Porcentaje</th>
+                                    <th>Progreso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in motos_por_marca %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-primary">{{ item.marca|default:"Sin marca" }}</span>
+                                    </td>
+                                    <td>{{ item.total|default:0 }}</td>
+                                    <td>
+                                        {% if total_motos > 0 %}
+                                            {% widthratio item.total total_motos 100 as porcentaje_marca %}
+                                            {{ porcentaje_marca|floatformat:1 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="progress progress-bar-custom">
+                                            {% if total_motos > 0 %}
+                                                {% widthratio item.total total_motos 100 as porcentaje_barra %}
+                                                <div class="progress-bar bg-primary" 
+                                                     role="progressbar" 
+                                                     style="width: {{ porcentaje_barra }}%"
+                                                     aria-valuenow="{{ porcentaje_barra }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                    {{ porcentaje_barra|floatformat:0 }}%
+                                                </div>
+                                            {% else %}
+                                                <div class="progress-bar bg-secondary" style="width: 0%">0%</div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        No hay datos de marcas disponibles.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-palette"></i> Motos por Color</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for item in motos_por_color %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>{{ item.color|default:"Sin color" }}</h6>
+                                            <small class="text-muted">{{ item.total|default:0 }} motos</small>
+                                        </div>
+                                        <div class="color-circle color-{{ item.color|default:'negro'|lower|slugify }}" 
+                                             style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ddd;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-center text-muted">No hay datos de colores disponibles.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte por Años -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-history"></i> Evolución por Años</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Año</th>
+                                    <th>Cantidad</th>
+                                    <th>Porcentaje</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in motos_por_year %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ item.year|default:"N/A" }}</span>
+                                    </td>
+                                    <td>{{ item.total|default:0 }}</td>
+                                    <td>
+                                        {% if total_motos > 0 %}
+                                            {% widthratio item.total total_motos 100 as porcentaje_year %}
+                                            {{ porcentaje_year|floatformat:1 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.year >= 2020 %}
+                                        <span class="badge bg-success">Moderno</span>
+                                        {% elif item.year >= 2010 %}
+                                        <span class="badge bg-warning">Intermedio</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Clásico</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        No hay datos por años disponibles.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de Reporte -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5><i class="fas fa-file-alt"></i> Resumen del Reporte</h5>
+                    <hr>
+                    <p><strong>Generado el:</strong> {% now "d/m/Y H:i" %}</p>
+                    <p><strong>Usuario:</strong> {{ user.username|default:"Invitado" }}</p>
+                    <p><strong>Total de registros analizados:</strong> {{ total_motos|default:0 }}</p>
+                    <p><strong>Periodo cubierto:</strong> {{ año_mas_viejo|default:"N/A" }} - {{ año_mas_nuevo|default:"N/A" }}</p>
+                    <p><strong>Marca predominante:</strong> 
+                        {% if motos_por_marca.0.marca %}
+                            {{ motos_por_marca.0.marca }} ({{ motos_por_marca.0.total|default:0 }} unidades)
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Verificar si los datos existen
+{% if datos_grafico_marca %}
+const datosMarca = {{ datos_grafico_marca|safe }};
+{% else %}
+const datosMarca = {labels: [], data: [], colores: []};
+{% endif %}
+
+{% if datos_grafico_year %}
+const datosYear = {{ datos_grafico_year|safe }};
+{% else %}
+const datosYear = {labels: [], data: []};
+{% endif %}
+
+// Esperar a que el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de pastel (marcas)
+    const ctxMarca = document.getElementById('graficoMarca');
+    if (ctxMarca && datosMarca.labels.length > 0) {
+        const graficoMarca = new Chart(ctxMarca, {
+            type: 'pie',
+            data: {
+                labels: datosMarca.labels,
+                datasets: [{
+                    data: datosMarca.data,
+                    backgroundColor: datosMarca.colores,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.raw + ' motos';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de barras (años)
+    const ctxYear = document.getElementById('graficoYear');
+    if (ctxYear && datosYear.labels.length > 0) {
+        const graficoYear = new Chart(ctxYear, {
+            type: 'bar',
+            data: {
+                labels: datosYear.labels,
+                datasets: [{
+                    label: 'Cantidad de Motos',
+                    data: datosYear.data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+
+// Función mejorada para exportar a PDF (opcional)
+function exportarPDF() {
+    // Solo cargar jsPDF si se necesita
+    if (typeof window.jspdf === 'undefined') {
+        console.warn('jsPDF no está disponible');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Agregar título
+    doc.setFontSize(20);
+    doc.text('Reporte de Motos', 20, 20);
+    
+    // Agregar fecha
+    doc.setFontSize(12);
+    doc.text('Generado el: ' + new Date().toLocaleDateString(), 20, 30);
+    
+    // Agregar datos
+    let y = 40;
+    doc.text(`Total de motos: {{ total_motos|default:0 }}`, 20, y);
+    y += 10;
+    doc.text(`Año promedio: {{ año_promedio|default:"N/A" }}`, 20, y);
+    y += 10;
+    doc.text(`Antigüedad promedio: {{ antiguedad_promedio|default:"N/A" }} años`, 20, y);
+    
+    // Guardar PDF
+    doc.save('reporte_motos.pdf');
+}
+</script>
+{% endblock %}

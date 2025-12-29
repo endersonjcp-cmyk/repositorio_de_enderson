@@ -1,0 +1,57 @@
+<!-- motos/templates/motos/motos.html -->
+{% extends 'Base.html' %}  <!-- Asegúrate del nombre correcto -->
+
+{% block content %}
+{% block title %}Mis Motos{% endblock %}
+
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Mis Motos Registradas</h1>
+            
+          
+            
+            {% if motos %} <!-- Verifica si hay motos registradas -->
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Marca</th>
+                            <!-- Asegúrate de que los nombres de los campos coincidan con tu modelo -->
+                            <th>Modelo</th>
+                            <th>Año</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for moto in motos %}
+                        <tr>
+                            <td>{{ moto.marca }}</td>
+                            <td>{{ moto.modelo }}</td>
+                            <td>{{ moto.year }}</td>
+                            <td>
+                                <a href="{% url 'edit_motorcycle' moto.id %}" 
+                                   class="btn btn-sm btn-primary">
+                                    Editar
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                No tienes motos registradas. 
+                <a href="{% url 'register_moto' %}">Registra tu primera moto</a>
+            </div>
+            {% endif %}
+            
+            <a href="{% url 'register_moto' %}" class="btn btn-success mt-3">
+                <i class="fas fa-plus"></i> Nueva Moto
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

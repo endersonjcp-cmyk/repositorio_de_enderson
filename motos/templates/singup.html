@@ -1,0 +1,23 @@
+{% extends 'Base.html' %}
+
+{% block content %}
+
+<h1>Registro de Usuario</h1>
+<p>Por favor, completa el siguiente formulario para registrarte.</p>
+<form method="POST" class="card card-body " >
+     {% csrf_token %}
+    <h1 class="text-center mb-4 tm-5">
+    Sing up 
+    </h1>
+    <!-- token especial para evitar que clonen la pagina. mecanismo de seguridad-->
+    <!-- el metodo post es un metodo que lo envia los campos de forma          oculta-->
+    <!-- de esta forma el navegador no va a mostar lo que el usuario escribe-->
+    {{error}}
+    {{ form.as_p }} <!-- renderiza el formulario con etiquetas <p> para cada campo -->
+
+        <button type="submit" class="btn btn-primary">
+    sing up
+</button>
+</form>
+
+{% endblock %}
